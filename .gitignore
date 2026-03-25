@@ -35,3 +35,7 @@ node_modules/
 # Generated output
 output/
 .ipynb_checkpoints/
+
+# Compiled binaries
+fft_bench
+fft_bench.exe

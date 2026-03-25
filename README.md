@@ -6,7 +6,7 @@ A collection of projects exploring topics in computer science and mathematics.
 
 | Project | Topic | Description |
 |---------|-------|-------------|
-| [Fourier Transforms](math/fourier-transforms/) | Signal Processing | DFT from scratch, FFT comparison, signal decomposition, frequency filtering, and 2-D image FFT with interactive Jupyter notebook |
+| [Fourier Transforms](math/fourier-transforms/) | Signal Processing | DFT from scratch, FFT comparison, signal decomposition, frequency filtering, and 2-D image FFT. Includes Python (Jupyter notebook), C (AVX SIMD), and C# (`System.Runtime.Intrinsics`) implementations with benchmarks |
 
 ## Structure
 
