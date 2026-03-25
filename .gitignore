@@ -31,3 +31,7 @@ node_modules/
 
 # Logs
 *.log
+
+# Generated output
+output/
+.ipynb_checkpoints/
