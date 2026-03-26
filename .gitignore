@@ -9,6 +9,7 @@ dist/
 .vs/
 .vscode/
 .idea/
+.claude/
 *.suo
 *.user
 *.sln.docstates
