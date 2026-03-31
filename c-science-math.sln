@@ -5,10 +5,35 @@ MinimumVisualStudioVersion = 10.0.40219.1
 Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "math", "math", "{A3E4B7A0-318E-B2FB-A157-C77F25DA4F44}"
 EndProject
 Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "fourier-transforms", "fourier-transforms", "{CC0FAA96-E132-51D5-F682-A44D7D917236}"
+	ProjectSection(SolutionItems) = preProject
+		math\fourier-transforms\README.md = math\fourier-transforms\README.md
+	EndProjectSection
 EndProject
 Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "csharp", "csharp", "{546542BB-7CE0-8564-CE22-105586F0FFC9}"
 EndProject
 Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "FourierTransform", "math\fourier-transforms\csharp\FourierTransform.csproj", "{49EB054F-DCDF-6AF6-9F06-C2B737D846CB}"
+EndProject
+Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "c", "c", "{D1A2B3C4-E5F6-7890-ABCD-EF1234567890}"
+	ProjectSection(SolutionItems) = preProject
+		math\fourier-transforms\c\main.c = math\fourier-transforms\c\main.c
+		math\fourier-transforms\c\fft.h = math\fourier-transforms\c\fft.h
+		math\fourier-transforms\c\Makefile = math\fourier-transforms\c\Makefile
+	EndProjectSection
+EndProject
+Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "python", "python", "{E2B3C4D5-F6A7-8901-BCDE-F12345678901}"
+	ProjectSection(SolutionItems) = preProject
+		math\fourier-transforms\python\main.py = math\fourier-transforms\python\main.py
+		math\fourier-transforms\python\requirements.txt = math\fourier-transforms\python\requirements.txt
+		math\fourier-transforms\python\demo.ipynb = math\fourier-transforms\python\demo.ipynb
+		math\fourier-transforms\python\fourier\__init__.py = math\fourier-transforms\python\fourier\__init__.py
+		math\fourier-transforms\python\fourier\dft.py = math\fourier-transforms\python\fourier\dft.py
+		math\fourier-transforms\python\fourier\visualise.py = math\fourier-transforms\python\fourier\visualise.py
+	EndProjectSection
+EndProject
+Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "Solution Items", "Solution Items", "{F3C4D5E6-A7B8-9012-CDEF-123456789012}"
+	ProjectSection(SolutionItems) = preProject
+		README.md = README.md
+	EndProjectSection
 EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
@@ -28,6 +53,8 @@ Global
 		{CC0FAA96-E132-51D5-F682-A44D7D917236} = {A3E4B7A0-318E-B2FB-A157-C77F25DA4F44}
 		{546542BB-7CE0-8564-CE22-105586F0FFC9} = {CC0FAA96-E132-51D5-F682-A44D7D917236}
 		{49EB054F-DCDF-6AF6-9F06-C2B737D846CB} = {546542BB-7CE0-8564-CE22-105586F0FFC9}
+		{D1A2B3C4-E5F6-7890-ABCD-EF1234567890} = {CC0FAA96-E132-51D5-F682-A44D7D917236}
+		{E2B3C4D5-F6A7-8901-BCDE-F12345678901} = {CC0FAA96-E132-51D5-F682-A44D7D917236}
 	EndGlobalSection
 	GlobalSection(ExtensibilityGlobals) = postSolution
 		SolutionGuid = {EBC8D2BB-CF9A-40E0-AC51-67B3FA09CAB3}

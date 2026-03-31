@@ -3,7 +3,7 @@ Fourier Transform Demo — Standalone Script
 
 Runs all demonstrations and saves plots to an 'output/' directory.
 Usage:
-    cd math/fourier-transforms
+    cd math/fourier-transforms/python
     pip install -r requirements.txt
     python main.py
 """

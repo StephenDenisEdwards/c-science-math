@@ -6,10 +6,10 @@ An interactive project that demonstrates Fourier transforms from first principle
 
 | Module | Description |
 |--------|-------------|
-| `fourier/dft.py` | Core implementations — DFT from scratch (O(N²)), NumPy FFT wrapper, composite signal generation, frequency-domain filtering |
-| `fourier/visualise.py` | Plotting functions for time/frequency domain, signal decomposition, filter comparison, and 2-D image FFT |
-| `demo.ipynb` | Interactive Jupyter notebook with explanations, LaTeX equations, and inline plots |
-| `main.py` | Standalone script that runs all demos and saves plots to `output/` |
+| `python/fourier/dft.py` | Core implementations — DFT from scratch (O(N²)), NumPy FFT wrapper, composite signal generation, frequency-domain filtering |
+| `python/fourier/visualise.py` | Plotting functions for time/frequency domain, signal decomposition, filter comparison, and 2-D image FFT |
+| `python/demo.ipynb` | Interactive Jupyter notebook with explanations, LaTeX equations, and inline plots |
+| `python/main.py` | Standalone script that runs all demos and saves plots to `python/output/` |
 | `c/` | C implementation with scalar and AVX SIMD FFT + benchmark |
 | `csharp/` | C# implementation with scalar and `System.Runtime.Intrinsics` AVX/FMA SIMD FFT + benchmark |
 
@@ -39,7 +39,7 @@ Computes the 2-D Fourier transform of greyscale images, displaying the log-scale
 ### Python (for notebook and visualisations)
 
 - **Python 3.10+** — [download](https://www.python.org/downloads/)
-- Dependencies listed in `requirements.txt` (numpy, scipy, matplotlib, Pillow, jupyter)
+- Dependencies listed in `python/requirements.txt` (numpy, scipy, matplotlib, Pillow, jupyter)
 
 ### .NET SDK (for C# implementation)
 
@@ -103,7 +103,7 @@ Verify with: `gcc --version`
 ### Python
 
 ```bash
-cd math/fourier-transforms
+cd math/fourier-transforms/python
 
 # Create a virtual environment (recommended)
 python -m venv .venv
@@ -120,7 +120,7 @@ pip install -r requirements.txt
 python main.py
 ```
 
-This generates five PNG plots in the `output/` directory:
+This generates five PNG plots in the `python/output/` directory:
 
 | File | Content |
 |------|---------|
@@ -151,14 +151,14 @@ There are two separate steps: **compiling** the code and then **running** the re
 Using GCC (Linux, macOS, or Windows with MSYS2):
 
 ```bash
-cd c
+cd math/fourier-transforms/c
 gcc -O2 -mavx -Wall -Wextra -lm -o fft_bench main.c
 ```
 
 Using MSVC (Windows with Visual Studio Build Tools — run from a **Developer Command Prompt**):
 
 ```bash
-cd c
+cd math/fourier-transforms/c
 cl /O2 /arch:AVX main.c /Fe:fft_bench.exe
 ```
 
@@ -182,7 +182,7 @@ A C# implementation using `System.Runtime.Intrinsics.X86` for explicit AVX and F
 ### Build and run
 
 ```bash
-cd csharp
+cd math/fourier-transforms/csharp
 dotnet run -c Release
 ```
 
@@ -227,10 +227,14 @@ fig.savefig("my_plot.png")
 
 ```
 fourier-transforms/
-├── fourier/                 # Python package
-│   ├── __init__.py
-│   ├── dft.py
-│   └── visualise.py
+├── python/                  # Python implementation
+│   ├── fourier/             # Python package
+│   │   ├── __init__.py
+│   │   ├── dft.py
+│   │   └── visualise.py
+│   ├── demo.ipynb
+│   ├── main.py
+│   └── requirements.txt
 ├── c/                       # C implementation
 │   ├── fft.h
 │   ├── main.c
@@ -239,8 +243,5 @@ fourier-transforms/
 │   ├── Fft.cs
 │   ├── Program.cs
 │   └── FourierTransform.csproj
-├── demo.ipynb
-├── main.py
-├── requirements.txt
 └── README.md
 ```
