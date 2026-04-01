@@ -1,9 +1,9 @@
 /*
- * GPU Parallel Vector Addition — OpenCL
+ * GPU Parallel Vector Addition -- OpenCL
  *
  * Same demo as the CUDA version but using OpenCL, which works with
  * NVIDIA, AMD, and Intel GPUs. Compiles with a standard C compiler
- * (gcc, cl) — no special compiler required.
+ * (gcc, cl) -- no special compiler required.
  *
  * The GPU kernel is written as a string and compiled at runtime by
  * the OpenCL driver, which is the key difference from CUDA's
@@ -27,7 +27,7 @@
 #define DEFAULT_N (1 << 24)  /* 16 million elements */
 
 /* ---------------------------------------------------------------------------
- * OpenCL kernel source — compiled at runtime by the GPU driver
+ * OpenCL kernel source -- compiled at runtime by the GPU driver
  * ------------------------------------------------------------------------ */
 static const char *kernel_source =
     "__kernel void vector_add(__global const float *a,\n"
@@ -41,7 +41,7 @@ static const char *kernel_source =
     "}\n";
 
 /* ---------------------------------------------------------------------------
- * CPU baseline — plain serial loop
+ * CPU baseline -- plain serial loop
  * ------------------------------------------------------------------------ */
 static void vector_add_cpu(const float *a, const float *b, float *c, int n)
 {
@@ -112,7 +112,7 @@ int main(int argc, char **argv)
     size_t bytes = (size_t)n * sizeof(float);
     cl_int err;
 
-    printf("Vector Addition — CPU vs GPU (OpenCL)\n");
+    printf("Vector Addition -- CPU vs GPU (OpenCL)\n");
     printf("Elements:  %d (%.1f MB per array)\n\n", n, bytes / (1024.0 * 1024.0));
 
     /* ----- Find a GPU device ----- */
@@ -241,7 +241,7 @@ int main(int argc, char **argv)
     printf("\n");
 
     if (verify(h_c_cpu, h_c_gpu, n))
-        printf("Verification: PASSED — all %d elements match\n", n);
+        printf("Verification: PASSED -- all %d elements match\n", n);
     else
         printf("Verification: FAILED\n");
 

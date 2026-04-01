@@ -4,7 +4,7 @@
  * Adds two large arrays element-by-element on both CPU (serial) and GPU
  * (massively parallel), then compares the execution time.
  *
- * Each GPU thread handles one element — with millions of elements running
+ * Each GPU thread handles one element -- with millions of elements running
  * simultaneously, this is the simplest possible demonstration of GPU
  * parallelism via CUDA.
  */
@@ -17,7 +17,7 @@
 #define DEFAULT_N (1 << 24)  /* 16 million elements */
 
 /* ---------------------------------------------------------------------------
- * GPU kernel — one thread per element
+ * GPU kernel -- one thread per element
  * ------------------------------------------------------------------------ */
 __global__ void vector_add_gpu(const float *a, const float *b, float *c, int n)
 {
@@ -27,7 +27,7 @@ __global__ void vector_add_gpu(const float *a, const float *b, float *c, int n)
 }
 
 /* ---------------------------------------------------------------------------
- * CPU baseline — plain serial loop
+ * CPU baseline -- plain serial loop
  * ------------------------------------------------------------------------ */
 void vector_add_cpu(const float *a, const float *b, float *c, int n)
 {
@@ -62,7 +62,7 @@ static int verify(const float *cpu, const float *gpu, int n)
     do {                                                                      \
         cudaError_t err = (call);                                             \
         if (err != cudaSuccess) {                                             \
-            fprintf(stderr, "CUDA error at %s:%d — %s\n",                    \
+            fprintf(stderr, "CUDA error at %s:%d -- %s\n",                    \
                     __FILE__, __LINE__, cudaGetErrorString(err));             \
             exit(EXIT_FAILURE);                                               \
         }                                                                     \
@@ -79,7 +79,7 @@ int main(int argc, char **argv)
 
     size_t bytes = (size_t)n * sizeof(float);
 
-    printf("Vector Addition — CPU vs GPU\n");
+    printf("Vector Addition -- CPU vs GPU\n");
     printf("Elements:  %d (%.1f MB per array)\n\n", n, bytes / (1024.0 * 1024.0));
 
     /* Print GPU info */
@@ -91,11 +91,15 @@ int main(int argc, char **argv)
     printf("SM count:  %d\n", prop.multiProcessorCount);
     printf("Compute:   %d.%d\n\n", prop.major, prop.minor);
 
-    /* Allocate host memory */
-    float *h_a = (float *)malloc(bytes);
-    float *h_b = (float *)malloc(bytes);
-    float *h_c_cpu = (float *)malloc(bytes);
-    float *h_c_gpu = (float *)malloc(bytes);
+    /* Allocate host memory using pinned (page-locked) memory.
+       Pageable memory (malloc) forces cudaMemcpy to copy through a pinned
+       staging buffer, roughly halving PCIe bandwidth.  Pinned memory allows
+       DMA transfers directly between host RAM and the GPU. */
+    float *h_a, *h_b, *h_c_cpu, *h_c_gpu;
+    CUDA_CHECK(cudaHostAlloc(&h_a,     bytes, cudaHostAllocDefault));
+    CUDA_CHECK(cudaHostAlloc(&h_b,     bytes, cudaHostAllocDefault));
+    CUDA_CHECK(cudaHostAlloc(&h_c_cpu, bytes, cudaHostAllocDefault));
+    CUDA_CHECK(cudaHostAlloc(&h_c_gpu, bytes, cudaHostAllocDefault));
 
     srand((unsigned)time(NULL));
     fill_random(h_a, n);
@@ -113,6 +117,17 @@ int main(int argc, char **argv)
     CUDA_CHECK(cudaMalloc(&d_b, bytes));
     CUDA_CHECK(cudaMalloc(&d_c, bytes));
 
+    int threads_per_block = 256;
+    int blocks = (n + threads_per_block - 1) / threads_per_block;
+
+    /* Warmup -- first CUDA kernel launch pays a one-time cost for context
+       initialisation and JIT compilation.  Run a throwaway launch so that
+       the timed runs measure only the actual work. */
+    CUDA_CHECK(cudaMemcpy(d_a, h_a, bytes, cudaMemcpyHostToDevice));
+    CUDA_CHECK(cudaMemcpy(d_b, h_b, bytes, cudaMemcpyHostToDevice));
+    vector_add_gpu<<<blocks, threads_per_block>>>(d_a, d_b, d_c, n);
+    CUDA_CHECK(cudaDeviceSynchronize());
+
     /* Use CUDA events for accurate GPU timing */
     cudaEvent_t start, stop;
     CUDA_CHECK(cudaEventCreate(&start));
@@ -123,9 +138,6 @@ int main(int argc, char **argv)
     CUDA_CHECK(cudaMemcpy(d_b, h_b, bytes, cudaMemcpyHostToDevice));
 
     /* Launch kernel */
-    int threads_per_block = 256;
-    int blocks = (n + threads_per_block - 1) / threads_per_block;
-
     CUDA_CHECK(cudaEventRecord(start));
     vector_add_gpu<<<blocks, threads_per_block>>>(d_a, d_b, d_c, n);
     CUDA_CHECK(cudaEventRecord(stop));
@@ -163,7 +175,7 @@ int main(int argc, char **argv)
     printf("\n");
 
     if (verify(h_c_cpu, h_c_gpu, n))
-        printf("Verification: PASSED — all %d elements match\n", n);
+        printf("Verification: PASSED -- all %d elements match\n", n);
     else
         printf("Verification: FAILED\n");
 
@@ -175,10 +187,10 @@ int main(int argc, char **argv)
     CUDA_CHECK(cudaFree(d_a));
     CUDA_CHECK(cudaFree(d_b));
     CUDA_CHECK(cudaFree(d_c));
-    free(h_a);
-    free(h_b);
-    free(h_c_cpu);
-    free(h_c_gpu);
+    CUDA_CHECK(cudaFreeHost(h_a));
+    CUDA_CHECK(cudaFreeHost(h_b));
+    CUDA_CHECK(cudaFreeHost(h_c_cpu));
+    CUDA_CHECK(cudaFreeHost(h_c_gpu));
 
     return 0;
 }

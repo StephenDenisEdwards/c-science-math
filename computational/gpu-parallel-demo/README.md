@@ -25,9 +25,22 @@ For our vector addition:
 - **Compute:** 16M additions (trivial)
 - **From GPU:** 1 array x 16M floats x 4 bytes = 64 MB downloaded
 
-The PCIe 3.0 x16 bus tops out at ~12 GB/s, so transferring 192 MB takes ~16 ms. The actual addition on the GPU takes well under 1 ms. This is why the "kernel only" speedup is huge (50-100x) but the "round trip" speedup is modest (2-3x) — the transfers dominate.
+The actual addition on the GPU takes well under 1 ms, but the transfers take much longer. How long depends on the PCIe link:
 
-Real GPU workloads (matrix multiplication, neural networks, physics simulations) have much higher compute-to-transfer ratios, so the transfer cost is amortised over far more work.
+| Configuration | Typical bandwidth | Transfer time (192 MB) |
+|--------------|-------------------|----------------------|
+| PCIe 3.0 x16 (desktop GPU) | ~12 GB/s | ~16 ms |
+| PCIe 4.0 x16 (desktop GPU) | ~25 GB/s | ~8 ms |
+| PCIe 3.0 x4 (laptop GPU) | ~3.2 GB/s | ~60 ms |
+
+On a desktop GPU with a full x16 link, the "kernel only" speedup is huge (50-100x) and the round-trip speedup is modest (2-3x). On a laptop GPU with a x4 link, the transfers dominate so heavily that the round-trip can actually be slower than the CPU — the GPU spends most of its time waiting for data to arrive over a narrow bus.
+
+You can check your link configuration with:
+```bash
+nvidia-smi --query-gpu=pcie.link.gen.current,pcie.link.width.current --format=csv
+```
+
+Real GPU workloads (matrix multiplication, neural networks, physics simulations) have much higher compute-to-transfer ratios, so the transfer cost is amortised over far more work. Vector addition is the worst case: one addition per element transferred.
 
 ---
 
@@ -85,6 +98,23 @@ cudaFree(d_a);                                         // free GPU memory
 
 This is verbose but gives you full control over when transfers happen, which is critical for performance in complex applications.
 
+### Pinned (Page-Locked) Host Memory
+
+By default, `malloc` allocates pageable memory — the OS can swap it to disk at any time. When you call `cudaMemcpy` with pageable memory, the CUDA driver cannot DMA directly from it (the pages might not be in physical RAM). Instead, it copies the data into a temporary pinned staging buffer first, then DMA transfers from that buffer to the GPU. This doubles the work for every transfer.
+
+Pinned memory is allocated with `cudaHostAlloc` (or `cudaMallocHost`). It is locked into physical RAM and mapped for DMA access, so `cudaMemcpy` can transfer directly between the host and GPU in a single step. This roughly doubles PCIe throughput for large transfers.
+
+```c
+float *h_a;
+cudaHostAlloc(&h_a, bytes, cudaHostAllocDefault);  // pinned allocation
+/* ... use h_a normally, including with cudaMemcpy ... */
+cudaFreeHost(h_a);                                  // must use cudaFreeHost, not free()
+```
+
+The tradeoff: pinned memory reduces the amount of RAM available for the OS to page, so allocating too much can hurt overall system performance. For benchmarks and GPU-intensive applications it is standard practice; for programs that allocate most of system RAM, use it selectively for the buffers that are transferred to the GPU.
+
+This program uses `cudaHostAlloc` for all host arrays. Without it, the round-trip memory transfer time is roughly 2x slower due to the staging copy overhead.
+
 ### The `nvcc` Compiler
 
 CUDA code uses the `.cu` file extension. The `nvcc` compiler splits the code:
@@ -106,6 +136,12 @@ cudaEventElapsedTime(&gpu_ms, start, stop);
 ```
 
 CUDA events use the GPU's own clock, so they measure exactly how long the GPU spent working — unaffected by CPU scheduling, other processes, or driver overhead. This is the standard way to benchmark CUDA kernels.
+
+### Warmup Launch
+
+The very first CUDA kernel launch in a process pays a one-time cost: the CUDA runtime initialises the GPU context, allocates internal structures, and JIT-compiles any PTX code to native GPU instructions (SASS) for the specific GPU architecture. This can add hundreds of milliseconds to what should be a sub-millisecond kernel.
+
+The program runs a throwaway kernel launch before the timed section so that the initialisation cost is excluded from the measurements. This is standard practice in GPU benchmarking — without it, the first timed kernel appears far slower than it actually is.
 
 ### Strengths and Limitations
 
@@ -327,11 +363,14 @@ Requires the CUDA Toolkit, which provides the `nvcc` compiler.
 
 Download from [developer.nvidia.com/cuda-downloads](https://developer.nvidia.com/cuda-downloads).
 
+**Important:** The CUDA Toolkit version must be compatible with your installed NVIDIA driver. Run `nvidia-smi` to check the maximum CUDA version your driver supports (shown in the top-right of the output). If the toolkit version exceeds this, either install an older toolkit or update your NVIDIA driver from [nvidia.com/drivers](https://www.nvidia.com/drivers).
+
 **Windows:**
 
 1. Download and run the installer (select at least "CUDA Development" components)
-2. The installer adds `nvcc` to your PATH automatically
-3. Open a **new** terminal and verify:
+2. The installer should add `nvcc` to your PATH automatically. If not, add `C:\Program Files\NVIDIA GPU Computing Toolkit\CUDA\vX.Y\bin` to your system PATH manually
+3. `nvcc` requires the MSVC compiler (`cl.exe`). Either compile from the **x64 Native Tools Command Prompt for VS** (recommended), or add the MSVC `bin` directory to your PATH
+4. Open a **new** terminal and verify:
    ```bash
    nvcc --version
    ```
@@ -353,7 +392,7 @@ The CUDA Toolkit includes OpenCL headers and libraries. If you have the CUDA Too
 
 Compile with:
 ```bash
-gcc -O2 -o vector_add_opencl vector_add_opencl.c -lOpenCL -I"C:/Program Files/NVIDIA GPU Computing Toolkit/CUDA/v12.x/include" -L"C:/Program Files/NVIDIA GPU Computing Toolkit/CUDA/v12.x/lib/x64"
+gcc -O2 -o vector_add_opencl vector_add_opencl.c -lOpenCL -I"C:/Program Files/NVIDIA GPU Computing Toolkit/CUDA/vX.Y/include" -L"C:/Program Files/NVIDIA GPU Computing Toolkit/CUDA/vX.Y/lib/x64"
 ```
 
 **Linux (Debian/Ubuntu):**
@@ -460,8 +499,10 @@ make all
 
 ## Example Output
 
+**Desktop GPU (RTX 3080, PCIe 3.0 x16, 68 SMs):**
+
 ```
-Vector Addition — CPU vs GPU
+Vector Addition -- CPU vs GPU
 Elements:  16777216 (64.0 MB per array)
 
 GPU:       NVIDIA GeForce RTX 3080
@@ -475,10 +516,30 @@ GPU (with memory transfers):      18.712 ms
 Kernel speedup:      80.2x
 Round-trip speedup:  2.2x
 
-Verification: PASSED — all 16777216 elements match
+Verification: PASSED -- all 16777216 elements match
 ```
 
-The kernel-only speedup is dramatic (often 50-100x), but the round-trip speedup is more modest because copying 192 MB of data (three arrays) over the PCIe bus takes time. This is a key insight: **GPU parallelism pays off most when the compute-to-transfer ratio is high** — matrix multiplication, simulations, and image processing benefit far more than simple element-wise addition.
+**Laptop GPU (RTX 3050 Ti, PCIe 3.0 x4, 20 SMs):**
+
+```
+Vector Addition -- CPU vs GPU
+Elements:  16777216 (64.0 MB per array)
+
+GPU:       NVIDIA GeForce RTX 3050 Ti Laptop GPU
+SM count:  20
+Compute:   8.6
+
+CPU (serial loop):                 9.000 ms
+GPU (kernel only):                  1.254 ms
+GPU (with memory transfers):       65.166 ms
+
+Kernel speedup:      7.2x
+Round-trip speedup:  0.1x
+
+Verification: PASSED -- all 16777216 elements match
+```
+
+The kernel-only speedup is always significant (7-80x depending on the GPU), but the round-trip speedup depends heavily on PCIe bandwidth. A desktop GPU with a full x16 link sees a modest 2-3x round-trip speedup. A laptop GPU with a x4 link sees the transfers dominate so heavily that the round-trip is actually slower than the CPU. This is the key insight: **GPU parallelism pays off most when the compute-to-transfer ratio is high** -- matrix multiplication, simulations, and image processing benefit far more than simple element-wise addition.
 
 ## Project Structure
 

@@ -1,18 +1,18 @@
 /*
- * GPU Parallel Vector Addition — OpenMP Target Offloading
+ * GPU Parallel Vector Addition -- OpenMP Target Offloading
  *
  * Same demo as the CUDA and OpenCL versions but using OpenMP's
  * `target` directive to offload work to a GPU. This is the simplest
- * approach — just add pragmas to standard C code.
+ * approach -- just add pragmas to standard C code.
  *
  * If no GPU is available (or the compiler doesn't support offloading),
  * OpenMP silently falls back to running on the CPU with threads,
  * so this always produces correct results.
  *
- * Compile (with GPU offloading — requires compiler support):
+ * Compile (with GPU offloading -- requires compiler support):
  *   gcc -O2 -fopenmp -foffload=nvptx-none -o vector_add_openmp vector_add_openmp.c
  *
- * Compile (CPU-only fallback — any compiler with OpenMP):
+ * Compile (CPU-only fallback -- any compiler with OpenMP):
  *   gcc -O2 -fopenmp -o vector_add_openmp vector_add_openmp.c
  */
 
@@ -24,7 +24,7 @@
 #define DEFAULT_N (1 << 24)  /* 16 million elements */
 
 /* ---------------------------------------------------------------------------
- * GPU kernel via OpenMP target — one line of pragma does all the work
+ * GPU kernel via OpenMP target -- one line of pragma does all the work
  * ------------------------------------------------------------------------ */
 static void vector_add_gpu(const float *a, const float *b, float *c, int n)
 {
@@ -35,7 +35,7 @@ static void vector_add_gpu(const float *a, const float *b, float *c, int n)
 }
 
 /* ---------------------------------------------------------------------------
- * CPU baseline — plain serial loop (no OpenMP)
+ * CPU baseline -- plain serial loop (no OpenMP)
  * ------------------------------------------------------------------------ */
 static void vector_add_cpu(const float *a, const float *b, float *c, int n)
 {
@@ -77,7 +77,7 @@ int main(int argc, char **argv)
 
     size_t bytes = (size_t)n * sizeof(float);
 
-    printf("Vector Addition — CPU vs GPU (OpenMP Target Offloading)\n");
+    printf("Vector Addition -- CPU vs GPU (OpenMP Target Offloading)\n");
     printf("Elements:  %d (%.1f MB per array)\n\n", n, bytes / (1024.0 * 1024.0));
 
     /* Check if GPU offloading is available */
@@ -87,7 +87,7 @@ int main(int argc, char **argv)
     if (num_devices > 0)
         printf("Default device: %d\n\n", default_device);
     else
-        printf("No GPU devices found — will run on CPU with threads\n\n");
+        printf("No GPU devices found -- will run on CPU with threads\n\n");
 
     /* Allocate */
     float *h_a = (float *)malloc(bytes);
@@ -124,7 +124,7 @@ int main(int argc, char **argv)
         printf("Speedup: %.1fx\n\n", cpu_ms / gpu_ms);
 
     if (verify(h_c_cpu, h_c_gpu, n))
-        printf("Verification: PASSED — all %d elements match\n", n);
+        printf("Verification: PASSED -- all %d elements match\n", n);
     else
         printf("Verification: FAILED\n");
 
