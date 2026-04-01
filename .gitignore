@@ -40,3 +40,4 @@ output/
 # Compiled binaries
 fft_bench
 fft_bench.exe
+vector_add.exe
